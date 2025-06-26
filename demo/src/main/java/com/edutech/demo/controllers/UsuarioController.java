@@ -4,91 +4,83 @@ import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import com.edutech.demo.models.Usuario;
 import com.edutech.demo.models.dto.UsuarioDto;
-import com.edutech.demo.repository.UsuarioRepository;
 import com.edutech.demo.service.UsuarioService;
 
 import io.swagger.v3.oas.annotations.Operation;
-import org.springframework.web.bind.annotation.RequestParam;
-
-
 
 @RestController
+@RequestMapping("/usuarios")
 public class UsuarioController {
 
-    private final UsuarioRepository usuarioRepository;
     @Autowired
     private UsuarioService usuarioService;
-    UsuarioService accionUsuarioService = new UsuarioService();
 
-    UsuarioController(UsuarioRepository usuarioRepository){
-        this.usuarioRepository = usuarioRepository;
-    }
-    @GetMapping("/usuarios")
-    public List<Usuario> traerUsuarios() {
-        return accionUsuarioService.obtenerUsuarios();
-    }
-        @GetMapping("/usuarios/{correo}")
-    public ResponseEntity<Usuario> traerUsuario(@PathVariable String correo){
-        return ResponseEntity.ok(usuarioService.obtenerUsuario(correo));
-    }
-    @PostMapping("/crearUsuario")
-    public ResponseEntity<String> obtenerUsuario(@RequestBody Usuario usuario){
-       return ResponseEntity.ok(usuarioService.crearUsuario(usuario)); 
+    @GetMapping
+    public ResponseEntity<List<Usuario>> listarUsuarios() {
+        return ResponseEntity.ok(usuarioService.obtenerUsuarios());
     }
 
-    @Operation(summary = "Este endpoint permite agregar usuario")
-
-    @GetMapping("/obtenerUsuario/{correo}")
-    public ResponseEntity<Usuario> obtenerUsuario(@PathVariable String correo){
+    @GetMapping("/correo/{correo}")
+    public ResponseEntity<Usuario> obtenerUsuarioPorCorreo(@PathVariable String correo) {
         Usuario usuario = usuarioService.obtenerUsuario(correo);
-        if(usuario != null){
+        if (usuario != null) {
             return ResponseEntity.ok(usuario);
         }
         return ResponseEntity.notFound().build();
     }
 
-    @DeleteMapping("/borrarUsuariosDto/{id}")
-    public ResponseEntity<String> borrarUsuario(@PathVariable Integer id){
-        boolean borrado = usuarioService.borrarUsuario(id);
-        if (borrado) {
-            return ResponseEntity.ok("Usuario borrado correctamente.");
-        } else {
-        return ResponseEntity.notFound().build();
-        }
-    }
-
-        @PutMapping("/actualizar/{idCurso}")
-    public ResponseEntity<String> actualizarUsuario(@PathVariable Integer id, @RequestBody Usuario usuarioActualizado) {
-        boolean actualizado = usuarioService.actualizarUsuario(id, usuarioActualizado);
-        if (actualizado) {
-            return ResponseEntity.ok("Usuario actualizado correctamente");
-        }
-        return ResponseEntity.notFound().build();
-    }
-
-    @GetMapping("/usuarioDto/{correo}")
-    public ResponseEntity<UsuarioDto> obtenerUserDto(@PathVariable String correo) {
-        return usuarioService.obtenerUserDto(correo);
-    }
-    
-    @GetMapping("/obtenerUsuarioDto/{id}")
-    public ResponseEntity<UsuarioDto> obtenerUsuarioDto(@PathVariable("id") Integer idUsuario) {
-        UsuarioDto dto = usuarioService.obtenerUsuarioDto(idUsuario);
+    @GetMapping("/dto/{id}")
+    public ResponseEntity<UsuarioDto> obtenerUsuarioDtoPorId(@PathVariable Integer id) {
+        UsuarioDto dto = usuarioService.obtenerUsuarioDto(id);
         if (dto != null) {
             return ResponseEntity.ok(dto);
         }
         return ResponseEntity.notFound().build();
     }
-    
 
+    @GetMapping("/dto/correo/{correo}")
+    public ResponseEntity<UsuarioDto> obtenerUsuarioDtoPorCorreo(@PathVariable String correo) {
+        return usuarioService.obtenerUserDto(correo);
+    }
+
+    @PostMapping
+    @Operation(summary = "Crear un nuevo usuario")
+    public ResponseEntity<String> crearUsuario(@RequestBody Usuario usuario) {
+        String resultado = usuarioService.crearUsuario(usuario);
+        if ("Usuario creado correctamente".equals(resultado)) {
+            return ResponseEntity.ok(resultado);
+        } else if ("El correo ya existe".equals(resultado)) {
+            return ResponseEntity.badRequest().body(resultado);
+        } else {
+            return ResponseEntity.status(500).body(resultado);
+        }
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<String> actualizarUsuario(@PathVariable Integer id, @RequestBody Usuario usuarioActualizado) {
+        String resultado = usuarioService.actualizarUsuario(id, usuarioActualizado);
+        if ("Usuario actualizado correctamente".equals(resultado)) {
+            return ResponseEntity.ok(resultado);
+        } else if ("Usuario no encontrado".equals(resultado)) {
+            return ResponseEntity.status(404).body(resultado);
+        } else {
+            return ResponseEntity.status(500).body(resultado);
+        }
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<String> borrarUsuario(@PathVariable Integer id) {
+        String resultado = usuarioService.borrarUsuario(id);
+        if ("Usuario Borrado correctamente".equals(resultado)) {
+            return ResponseEntity.ok(resultado);
+        } else if ("Usuario No existe".equals(resultado)) {
+            return ResponseEntity.status(404).body(resultado);
+        } else {
+            return ResponseEntity.status(500).body(resultado);
+        }
+    }
 }

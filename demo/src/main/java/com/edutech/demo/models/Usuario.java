@@ -9,6 +9,9 @@ public class Usuario {
     private String apmaterno;
     private String fechaNacimiento;
     private String correo;
+
+    public Usuario() {
+    }
     
     public Usuario(Integer idUsuario, String passwordUsuario, String rut, String nombre, String appaterno,
             String apmaterno, String fechaNacimiento, String correo) {
@@ -20,6 +23,11 @@ public class Usuario {
         this.apmaterno = apmaterno;
         this.fechaNacimiento = fechaNacimiento;
         this.correo = correo;
+    }
+
+    public Usuario(int idUsuario2, String passwordUsuario2, int rut2, String nombre2, String appaterno2,
+            String apmaterno2, String fechaNacimiento2, String correo2) {
+        
     }
 
     public Integer getIdUsuario() {

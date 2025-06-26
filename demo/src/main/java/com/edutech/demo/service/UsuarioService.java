@@ -1,13 +1,13 @@
 package com.edutech.demo.service;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.PathVariable;
 
 import com.edutech.demo.models.Usuario;
 import com.edutech.demo.models.dto.UsuarioDto;
@@ -16,26 +16,30 @@ import com.edutech.demo.repository.UsuarioRepository;
 
 @Service
 public class UsuarioService {
+
     @Autowired
     private UsuarioRepository usuarioRepository;
 
-    private final List<Usuario> usuarios = new ArrayList<>();
-
-    public UsuarioService(){
-        usuarios.add(new Usuario(1,"password","16.954.815-5", "pedro","gonzalez","pereira","18 noviembre 1968", "pedro@gmail.com"));
+    public List<Usuario> obtenerUsuarios() {
+        return usuarioRepository.findAll().stream()
+                .map(this::convertirAUsuario)
+                .collect(Collectors.toList());
     }
 
-
-    public List<Usuario> obtenerUsuarios(){
-        return usuarios;
-    }
-    
-    public String crearUsuario(Usuario user){
+    public Usuario obtenerUsuario(String correo) {
         try {
-            Boolean estado = usuarioRepository.existsByCorreo(user.getCorreo());
-            if(!estado){
+            UsuarioEntity usuario = usuarioRepository.findByCorreo(correo);
+            return usuario != null ? convertirAUsuario(usuario) : null;
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    public String crearUsuario(Usuario user) {
+        try {
+            boolean existe = usuarioRepository.existsByCorreo(user.getCorreo());
+            if (!existe) {
                 UsuarioEntity usuarioNuevo = new UsuarioEntity();
-                usuarioNuevo.setIdUsuario(user.getIdUsuario());
                 usuarioNuevo.setNombre(user.getNombre());
                 usuarioNuevo.setAppaterno(user.getAppaterno());
                 usuarioNuevo.setApmaterno(user.getApmaterno());
@@ -47,88 +51,87 @@ public class UsuarioService {
                 return "Usuario creado correctamente";
             }
             return "El correo ya existe";
-
-        }catch (Exception e) {
-            e.printStackTrace();
-            return "Error al crear usuario" + e.getMessage();
-    }
-    }
-
-public Usuario obtenerUsuario(String correo){
-    try{
-        UsuarioEntity usuario = usuarioRepository.findByCorreo(correo);
-        if(usuario != null){
-            Usuario user = new Usuario(
-            usuario.getIdUsuario(),
-            usuario.getNombre(),
-            usuario.getAppaterno(),
-            usuario.getApmaterno(),
-            usuario.getFechaNacimiento(),
-            usuario.getPasswordUsuario(),
-            usuario.getRut(),
-            usuario.getCorreo()
-            );
-            return user;
+        } catch (ObjectOptimisticLockingFailureException e) {
+            return "Error de concurrencia: " + e.getMessage();
+        } catch (Exception e) {
+            return "Error al crear usuario: " + e.getMessage();
         }
-        return null;
-    }catch (Exception e){
-        return null;
     }
-}
-    public boolean borrarUsuario(Integer id) {
-    if (usuarioRepository.existsById(id)) {
-        usuarioRepository.deleteById(id);
-        return true;
+
+    public String borrarUsuario(Integer id) {
+        try {
+            if (usuarioRepository.existsById(id)) {
+                usuarioRepository.deleteById(id);
+                return "Usuario Borrado correctamente";
+            }
+            return "Usuario No existe";
+        } catch (Exception e) {
+            return "Error al borrar usuario: " + e.getMessage();
+        }
     }
-    return false;
-}
 
-public boolean actualizarUsuario(Integer id, Usuario usuarioActualizado) {
-    Optional<UsuarioEntity> usuarioExistente = usuarioRepository.findById(id);
-    if (usuarioExistente.isPresent()) {
-        UsuarioEntity usuario = usuarioExistente.get();
-        usuario.setPasswordUsuario(usuarioActualizado.getPasswordUsuario());
-        usuario.setRut(usuarioActualizado.getRut());
-        usuario.setNombre(usuarioActualizado.getNombre());
-        usuario.setAppaterno(usuarioActualizado.getAppaterno());
-        usuario.setApmaterno(usuarioActualizado.getApmaterno());
-        usuario.setFechaNacimiento(usuarioActualizado.getFechaNacimiento());
-        usuario.setCorreo(usuarioActualizado.getCorreo());
-        usuarioRepository.save(usuario);
-        return true;
+    public String actualizarUsuario(Integer id, Usuario usuarioActualizado) {
+        try {
+            Optional<UsuarioEntity> opt = usuarioRepository.findById(id);
+            if (opt.isPresent()) {
+                UsuarioEntity usuario = opt.get();
+                usuario.setPasswordUsuario(usuarioActualizado.getPasswordUsuario());
+                usuario.setRut(usuarioActualizado.getRut());
+                usuario.setNombre(usuarioActualizado.getNombre());
+                usuario.setAppaterno(usuarioActualizado.getAppaterno());
+                usuario.setApmaterno(usuarioActualizado.getApmaterno());
+                usuario.setFechaNacimiento(usuarioActualizado.getFechaNacimiento());
+                usuario.setCorreo(usuarioActualizado.getCorreo());
+                usuarioRepository.save(usuario);
+                return "Usuario actualizado correctamente";
+            }
+            return "Usuario no encontrado";
+        } catch (Exception e) {
+            return "Error al actualizar usuario: " + e.getMessage();
+        }
     }
-    return false;
-}
 
+    public UsuarioDto obtenerUsuarioDto(Integer idUsuario) {
+        try {
+            UsuarioEntity usuario = usuarioRepository.findByIdUsuario(idUsuario);
+            if (usuario != null) {
+                return new UsuarioDto(
+                        usuario.getNombre(),
+                        usuario.getAppaterno(),
+                        usuario.getApmaterno(),
+                        usuario.getCorreo()
+                );
+            }
+            return null;
+        } catch (Exception e) {
+            return null;
+        }
+    }
 
-public UsuarioDto obtenerUsuarioDto(Integer idUsuario){
-    try{
-        UsuarioEntity usuario = usuarioRepository.findByIdUsuario(idUsuario);
-        UsuarioDto nuevoUsuario = new UsuarioDto(
-            usuario.getNombre(),
-            usuario.getAppaterno(),
-            usuario.getApmaterno(),
-            usuario.getCorreo()
+    public ResponseEntity<UsuarioDto> obtenerUserDto(String correo) {
+        UsuarioEntity usuario = usuarioRepository.findByCorreo(correo);
+        if (usuario != null) {
+            UsuarioDto usuarioResponse = new UsuarioDto(
+                    usuario.getNombre(),
+                    usuario.getAppaterno(),
+                    usuario.getApmaterno(),
+                    usuario.getCorreo()
+            );
+            return ResponseEntity.ok(usuarioResponse);
+        }
+        return ResponseEntity.notFound().build();
+    }
+
+    private Usuario convertirAUsuario(UsuarioEntity entidad) {
+        return new Usuario(
+                entidad.getIdUsuario(),
+                entidad.getPasswordUsuario(),
+                entidad.getRut(),
+                entidad.getNombre(),
+                entidad.getAppaterno(),
+                entidad.getApmaterno(),
+                entidad.getFechaNacimiento(),
+                entidad.getCorreo()
         );
-        return nuevoUsuario;
-    }catch(Exception e){
-        return null;
     }
-}
-
-public ResponseEntity<UsuarioDto> obtenerUserDto(@PathVariable String correo){
-    Boolean estado = usuarioRepository.existsByCorreo(correo);
-    if(estado){
-        UsuarioEntity nuevoUsuario = usuarioRepository.findByCorreo(correo);
-        UsuarioDto usuarioResponse = new UsuarioDto(
-            nuevoUsuario.getNombre(),
-            nuevoUsuario.getAppaterno(),
-            nuevoUsuario.getApmaterno(),
-            nuevoUsuario.getCorreo()
-        );
-        return ResponseEntity.ok(usuarioResponse);
-    }
-    return ResponseEntity.notFound().build();
-}
-
 }
