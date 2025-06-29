@@ -18,8 +18,8 @@ jobs:
           key: ${{ secrets.PRIVATE_KEY }}
           port: ${{ secrets.PORT }}
           script: |
-            mkdir -p /home/ubuntu/fs1001
-            chmod 755 /home/ubuntu/fs1001  # Ensure proper permissions
+            mkdir -p /home/ubuntu/fs1002
+            chmod 755 /home/ubuntu/fs1002  # Ensure proper permissions
 
       - name: Sync files with server
         uses: burnett01/rsync-deployments@7.0.2
@@ -28,7 +28,7 @@ jobs:
           path: "./"
           remote_host: ${{ secrets.IP_SERVER }}
           remote_user: ${{ secrets.USERNAME }}
-          remote_path: "/home/ubuntu/fs1001/"
+          remote_path: "/home/ubuntu/fs1002/"
           remote_key: ${{ secrets.PRIVATE_KEY }}
           remote_port: ${{ secrets.PORT }}
 
@@ -40,7 +40,7 @@ jobs:
           key: ${{ secrets.PRIVATE_KEY }}
           port: ${{ secrets.PORT }}
           script: |
-            cd /home/ubuntu/fs1001
+            cd /home/ubuntu/fs1002
             # Graceful shutdown and rebuild
             sudo docker compose down --remove-orphans --timeout 120
             sudo docker compose up -d --build --force-recreate
