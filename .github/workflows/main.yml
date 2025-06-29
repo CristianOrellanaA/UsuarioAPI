@@ -14,12 +14,13 @@ jobs:
             - name: Crear carpeta en el servidor AWS 
               uses: appleboy/ssh-action@v1
               with:
-                    host: ${{ secrets.IP_SERVER }}
-                    username: ${{ secrets.USERNAME }}
-                    key: ${{ secrets.PRIVATE_KEY }}
-                    port: ${{ secrets.PORT }}
-                    script: |
-                            mkdir -p /home/ubuntu/fs1001
+                host: ${{ secrets.IP_SERVER }}
+                username: ${{ secrets.USERNAME }}
+                key: ${{ secrets.PRIVATE_KEY }}
+                port: ${{ secrets.PORT }}
+                script: |
+                  mkdir -p /home/ubuntu/fs1001
+
 
             - name: Sincronizar archivos con el servidor
               uses: burnett01/rsync-deployments@7.0.2
@@ -31,6 +32,13 @@ jobs:
                 remote_path: "/home/ubuntu/fs1001/"  # Ruta de destino en el servidor
                 remote_key: ${{ secrets.PRIVATE_KEY }}  # Clave SSH para autenticar
                 remote_port: ${{ secrets.PORT }}  # Puerto SSH (si es distinto del predeterminado 22)
+
+            - name: Mostrar valores secretos (debug temporal)
+              run: |
+                echo "IP: ${{ secrets.IP_SERVER }}"
+                echo "Usuario: ${{ secrets.USERNAME }}"
+                echo "Puerto: ${{ secrets.PORT }}"
+                echo "Clave: ${#${{ secrets.PRIVATE_KEY }}} caracteres"
 
 
             - name: Levantar docker-compose 
