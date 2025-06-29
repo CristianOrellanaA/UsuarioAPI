@@ -1,4 +1,4 @@
-name: maquinaJava
+name: API_Edutech
 on:
     push:
         branches:
