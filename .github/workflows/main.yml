@@ -20,12 +20,13 @@ jobs:
 
       - name: Ejecutar pruebas unitarias
         run: mvn test
+        working-directory: UsuarioAPI
 
       - name: Subir reporte de pruebas (Surefire)
         uses: actions/upload-artifact@v4
         with:
           name: surefire-report
-          path: target/surefire-reports/
+          path: UsuarioAPI/target/surefire-reports/
 
       - name: Crear carpeta en el server
         uses: appleboy/ssh-action@v1
