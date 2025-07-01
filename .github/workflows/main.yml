@@ -19,14 +19,13 @@ jobs:
           distribution: 'temurin'
 
       - name: Ejecutar pruebas unitarias
-        working-directory: UsuarioAPI
         run: mvn test
 
       - name: Subir reporte de pruebas (Surefire)
         uses: actions/upload-artifact@v4
         with:
           name: surefire-report
-          path: UsuarioAPI/target/surefire-reports/
+          path: target/surefire-reports/
 
       - name: Crear carpeta en el server
         uses: appleboy/ssh-action@v1
