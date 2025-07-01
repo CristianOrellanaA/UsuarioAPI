@@ -28,7 +28,6 @@ jobs:
           name: surefire-report
           path: UsuarioAPI/target/surefire-reports/
 
-
       - name: Crear carpeta en el server
         uses: appleboy/ssh-action@v1
         with:
