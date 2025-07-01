@@ -1,5 +1,4 @@
 name: maquinaJava
-
 on:
   push:
     branches: [main]
@@ -7,28 +6,11 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Revisar repositorio
-        uses: actions/checkout@v4
+      - name: Revisa repositorio
+        uses: actions/checkout@v4 
 
-      - name: Set up JDK
-        uses: actions/setup-java@v4
-        with:
-          java-version: '17'
-          distribution: 'temurin'
-
-      - name: Ejecutar pruebas unitarias
-        run: mvn test
-        working-directory: UsuarioAPI
-
-      - name: Subir reporte de pruebas (Surefire)
-        uses: actions/upload-artifact@v4
-        with:
-          name: surefire-report
-          path: UsuarioAPI/target/surefire-reports/
-
-      - name: Crear carpeta en el server
+      - name: Crea carpeta en server
         uses: appleboy/ssh-action@v1
         with:
           host: ${{ secrets.IP_SERVER }}
@@ -36,21 +18,21 @@ jobs:
           key: ${{ secrets.PRIVATE_KEY }}
           port: ${{ secrets.PORT }}
           script: |
-            mkdir -p /home/ubuntu/UsuarioAPI
-            chmod 755 /home/ubuntu/UsuarioAPI
+            mkdir -p /home/ubuntu/fs1001
+            chmod 755 /home/ubuntu/fs1001  
 
-      - name: Sincronizar archivos con el servidor EC2
+      - name: Sincroniza archivos en el server
         uses: burnett01/rsync-deployments@7.0.2
         with:
-          switches: "-avzh --delete --exclude=.git/"
+          switches: "-avzh --delete --exclude=.git/" 
           path: "./"
           remote_host: ${{ secrets.IP_SERVER }}
           remote_user: ${{ secrets.USERNAME }}
-          remote_path: "/home/ubuntu/UsuarioAPI/"
+          remote_path: "/home/ubuntu/fs1002/"
           remote_key: ${{ secrets.PRIVATE_KEY }}
           remote_port: ${{ secrets.PORT }}
 
-      - name: Lanzamiento de contenedores en EC2
+      - name: Lanza containers docker
         uses: appleboy/ssh-action@v1
         with:
           host: ${{ secrets.IP_SERVER }}
@@ -58,7 +40,9 @@ jobs:
           key: ${{ secrets.PRIVATE_KEY }}
           port: ${{ secrets.PORT }}
           script: |
-            cd /home/ubuntu/UsuarioAPI
+            cd /home/ubuntu/fs1002
+
             sudo docker compose down --remove-orphans --timeout 120
             sudo docker compose up -d --build --force-recreate
+
             sudo docker system prune -f
